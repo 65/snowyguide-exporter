@@ -30,7 +30,7 @@ function cooma_create_location_taxo() {
 
     register_taxonomy(
         'event-location',
-        ['event', 'accommodation', 'coffee_food_wine'],
+        ['event', 'accommodation', 'coffee_food_wine', 'groups_associations', 'attractions'],
         array(
             'labels'       => $labels,
             'hierarchical' => true,
@@ -57,7 +57,7 @@ remove_action('init', 'em_ical');
 function cooma_get_business_json(WP_REST_Request $request) {
     $data = [];
     $args = [
-        'post_type'      => ['accommodation', 'coffee_food_wine'],
+        'post_type'      => ['accommodation', 'coffee_food_wine', 'attractions', 'groups_associations'],
         'post_status'    => 'publish',
         'posts_per_page' => -1
     ];
@@ -102,6 +102,25 @@ function cooma_get_business_json(WP_REST_Request $request) {
                 $key_additional_image = 'cfw_additional_image';
                 $key_taxonomy         = 'cfw_types';
             }
+            if ('groups_associations' == get_post_type()) {
+                $key_website          = 'biz_website';
+                $key_address          = 'biz_address';
+                $key_additional_image = 'biz_additional_image';
+                $key_phone            = 'biz_phone';
+            } elseif ('attractions' == get_post_type()) {
+                $key_website          = 'website';
+                $key_additional_image = 'attraction_images';
+                $key_address          = 'address';
+                $key_phone            = 'phone';
+            }
+            if ('groups_associations' == get_post_type() || 'attractions' == get_post_type()) {
+                $key_taxonomy         = 'business_categories';
+            }
+            $key_opening_hours      = 'opening_hours';
+            $key_email              = 'email';
+            $key_city               = 'city';
+            $key_state              = 'state';
+            $key_postcode           = 'postcode';
 
             // Query terms and address
             $address = get_field($key_address);
@@ -117,6 +136,8 @@ function cooma_get_business_json(WP_REST_Request $request) {
             if (is_wp_error($locations)) {
                 $locations = [];
             }
+
+            if(count($terms) < 1 || count($locations) < 1) continue;
 
             // Images
             $images = [];
@@ -139,14 +160,14 @@ function cooma_get_business_json(WP_REST_Request $request) {
             $data[] = [
                 'listingid'     => get_the_ID(),
                 'name'          => get_the_title(),
-                'openingHours'  => null,
+                'openingHours'  => (get_field($key_opening_hours) ? trim(get_field($key_opening_hours)) : null),
                 'phone'         => (get_field($key_phone) ? trim(get_field($key_phone)) : null),
-                'email'         => null,
+                'email'         => (get_field($key_email) ? trim(get_field($key_email)) : null),
                 'website'       => (get_field($key_website) ? trim(get_field($key_website)) : null),
                 'address'       => ($address ? trim($address['address']) : null),
-                'city'          => null,
-                'state'         => null,
-                'postcode'      => null,
+                'city'          => (get_field($key_city) ? trim(get_field($key_city)) : null),
+                'state'         => (get_field($key_state) ? trim(get_field($key_state)) : null),
+                'postcode'      => (get_field($key_postcode) ? trim(get_field($key_postcode)) : null),
                 'latitude'      => ($address ? trim($address['lat']) : null),
                 'longitude'     => ($address ? trim($address['lng']) : null),
                 'locations'      => $locations,
