@@ -30,7 +30,7 @@ function cooma_create_location_taxo() {
 
     register_taxonomy(
         'event-location',
-        ['event', 'accommodation', 'coffee_food_wine', 'groups_associations', 'attractions'],
+        ['event', 'event-recurring', 'accommodation', 'coffee_food_wine', 'groups_associations', 'attractions'],
         array(
             'labels'       => $labels,
             'hierarchical' => true,

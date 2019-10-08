@@ -5,7 +5,7 @@ global $wpdb;
 $events_table    = EM_EVENTS_TABLE;
 $locations_table = EM_LOCATIONS_TABLE;
 
-$sql = "
+/*$sql = "
     SELECT * FROM $events_table
     LEFT JOIN $locations_table ON {$locations_table}.location_id={$events_table}.location_id WHERE
     event_status = 1 AND
@@ -23,7 +23,26 @@ $sql = "
     ) AND
     {{where_postids}}
     GROUP BY $events_table.post_id ORDER BY event_start_date ASC
-    LIMIT 0,50";
+    LIMIT 0,50";*/
+$sql = "
+    SELECT * FROM $events_table
+    LEFT JOIN $locations_table ON {$locations_table}.location_id={$events_table}.location_id WHERE
+    event_status = 1 AND
+    
+    (
+        event_start_date >= CAST('" . date('Y-m-d') . "' AS DATE)
+        OR
+        (
+            event_end_date >= CAST('" . date('Y-m-d') . "' AS DATE)
+            AND
+            event_end_date != '0000-00-00'
+            AND
+            event_end_date IS NOT NULL
+        )
+    ) AND
+    {{where_postids}}
+    GROUP BY $events_table.post_id ORDER BY event_start_date ASC
+    LIMIT 0,100";
 
 if (!empty($_GET['event-cat']) || !empty($_GET['location'])) {
 
@@ -72,8 +91,34 @@ $results   = $wpdb->get_results($sql, ARRAY_A);
 $fz_events = array();
 
 foreach($results as $result){
+    $locations = [];
+    /*echo '<pre>';
+    print_r($result);
+    echo '</pre>';*/
+    if($result['recurrence'] == 1) $_slug = 'event-recurring';
+    else $_slug = 'event';
+
+
+    $queried_post = get_page_by_path($result['event_slug'], OBJECT, $_slug);
+    if($queried_post != null) {
+        // Locations
+        $locations = wp_get_post_terms($queried_post->ID, 'event-location', ['fields' => 'names']);
+
+        if (is_wp_error($locations)) {
+            $locations = [];
+        }
+    }
+
+    if(count($locations) < 1) continue;
+
     $fz_events[$result['event_id']] = new EM_Event($result['event_id']);
 }
+/*var_dump(count($fz_events));
+echo '<br>';
+foreach ($fz_events as $fz_event) {
+    echo $fz_event->event_id.'             '.$fz_event->post_id."<br>";
+}
+die();*/
 
 //define and clean up formats for display
 $summary_format = str_replace ( ">", "&gt;", str_replace ( "<", "&lt;", get_option ( 'dbem_ical_description_format' ) ) );
