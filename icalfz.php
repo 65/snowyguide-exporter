@@ -220,7 +220,7 @@ foreach ( $EM_Events as $EM_Event ) {
     }
 
     //create a UID
-    $UID = sprintf( '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+    /*$UID = sprintf( '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
         // 32 bits for "time_low"
         mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff ),
         // 16 bits for "time_mid"
@@ -234,7 +234,8 @@ foreach ( $EM_Events as $EM_Event ) {
         mt_rand( 0, 0x3fff ) | 0x8000,
         // 48 bits for "node"
         mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff )
-    );
+    );*/
+    $UID = 'vc-'.$EM_Event->post_id;
 
 //output ical item
 $output = "
